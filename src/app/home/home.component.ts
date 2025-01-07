@@ -19,6 +19,7 @@ import {
   outputToObservable,
   outputFromObservable,
 } from '@angular/core/rxjs-interop';
+import { CoursesServiceWithFetch } from '../services/courses-fetch.service';
 
 type Counter = {
   value: number;
@@ -31,47 +32,22 @@ type Counter = {
   styleUrl: './home.component.scss',
 })
 export class HomeComponent {
-  counterSimple = signal(0); // Simple Signal
+  courses = signal<Course[]>([]);
+  coursesService = inject(CoursesServiceWithFetch);
 
-  counter = signal<Counter>({ value: 100 }); // Object Signal
-
-  values = signal<number[]>([0]); // Array Signal
-
-  counterReadOnly = signal(0).asReadonly(); // ReadOnly Signal
-  // readonly signals cant be updated
-
-  tenXCounter = computed(() => {
-    const val = this.counterSimple();
-    return val * 10;
-  });
-
-  hundredXCounter = computed(() => {
-    const val = this.tenXCounter();
-    return val * 10;
-  });
-
-  incrementSimpleSignal() {
-    this.counterSimple.set(this.counterSimple() + 1);
-    // another way tos set value to a signal
-    // this.counter.update((counter) => counter + 1);
+  constructor() {
+    this.loadCourses().then(() =>
+      console.log(`All courses loaded:`, this.courses())
+    );
   }
 
-  incrementObjectSignal() {
-    this.counter.update((counter) => ({
-      ...counter,
-      value: counter.value + 1,
-    }));
-  }
-
-  appendArraySignal() {
-    // WRONG WAY TO DO IT (Only will work with angular default change detection)
-
-    // const values = this.values();
-    // const last = values[values.length - 1];
-    // values.push(last + 1);
-
-    // RIGHT WAY TO DO IT (That will work with Signal Change Detection)
-
-    this.values.update((values) => [...values, values[values.length - 1] + 1]);
+  async loadCourses() {
+    try {
+      const courses = await this.coursesService.loadAllCourses();
+      this.courses.set(courses);
+    } catch (err) {
+      alert(`Error loading course!`);
+      console.error(err);
+    }
   }
 }
