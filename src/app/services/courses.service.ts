@@ -25,7 +25,7 @@ export class CoursesService {
       `${this.env.apiRoot}/courses`,
       course
     );
-    return await firstValueFrom(course$);
+    return firstValueFrom(course$);
   }
 
   async saveCourse(
@@ -36,11 +36,11 @@ export class CoursesService {
       `${this.env.apiRoot}/courses/${courseId}`,
       changes
     );
-    return await firstValueFrom(course$);
+    return firstValueFrom(course$);
   }
 
   async deleteCourse(courseId: string) {
     const delete$ = this.http.delete(`${this.env.apiRoot}/courses/${courseId}`);
-    return await firstValueFrom(delete$);
+    return firstValueFrom(delete$);
   }
 }
