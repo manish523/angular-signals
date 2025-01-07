@@ -54,11 +54,23 @@ export class EditCourseDialogComponent {
     this.dialogRef.close();
   }
 
-  onSave() {
+  async onSave() {
     const courseProps = this.form.value as Partial<Course>;
 
     if (this.data.mode === 'update') {
-      this.saveCourse(this.data?.course!.id, courseProps);
+      await this.saveCourse(this.data?.course!.id, courseProps);
+    } else if (this.data.mode === 'create') {
+      await this.createCourse(courseProps);
+    }
+  }
+
+  async createCourse(course: Partial<Course>) {
+    try {
+      const newCourse = await this.coursesService.createCourse(course);
+      this.dialogRef.close(newCourse);
+    } catch (err) {
+      console.error(err);
+      alert(`Error creating the course`);
     }
   }
 

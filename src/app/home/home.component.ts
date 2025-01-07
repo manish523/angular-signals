@@ -20,6 +20,8 @@ import {
   outputFromObservable,
 } from '@angular/core/rxjs-interop';
 import { CoursesServiceWithFetch } from '../services/courses-fetch.service';
+import { openEditCourseDialog } from '../edit-course-dialog/edit-course-dialog.component';
+import { LoadingService } from '../loading/loading.service';
 
 type Counter = {
   value: number;
@@ -36,6 +38,8 @@ export class HomeComponent {
 
   coursesService = inject(CoursesService);
 
+  dialog = inject(MatDialog);
+
   beginnerCourses = computed(() => {
     const courses = this.#courses();
     return courses.filter((course) => course.category === 'BEGINNER');
@@ -45,6 +49,8 @@ export class HomeComponent {
     const courses = this.#courses();
     return courses.filter((course) => course.category === 'ADVANCED');
   });
+
+  loadingService = inject(LoadingService);
 
   constructor() {
     effect(() => {
@@ -59,11 +65,45 @@ export class HomeComponent {
 
   async loadCourses() {
     try {
+      // this.loadingService.loadingOn();
       const courses = await this.coursesService.loadAllCourses();
       this.#courses.set(courses.sort(sortCoursesBySeqNo));
     } catch (err) {
       alert(`Error loading course!`);
       console.error(err);
     }
+    // finally {
+    //   this.loadingService.loadingOff();
+    // }
+  }
+
+  onCourseUpdated(updatedCourse: Course) {
+    const courses = this.#courses();
+    const newCourses = courses.map((course) =>
+      course.id === updatedCourse.id ? updatedCourse : course
+    );
+    this.#courses.set(newCourses);
+  }
+
+  async onCourseDeleted(courseId: string) {
+    try {
+      await this.coursesService.deleteCourse(courseId);
+      const courses = this.#courses();
+      const newCourse = courses.filter((course) => course.id !== courseId);
+      this.#courses.set(newCourse);
+    } catch (err) {
+      console.error(err);
+      alert(`Error deleting course`);
+    }
+  }
+
+  async onAddCourse() {
+    const newCourse = await openEditCourseDialog(this.dialog, {
+      mode: 'create',
+      title: 'Create New Course',
+    });
+
+    const newCourses = [...this.#courses(), newCourse];
+    this.#courses.set(newCourses);
   }
 }
